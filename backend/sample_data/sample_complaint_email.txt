@@ -1,0 +1,33 @@
+From: qa.complaints@metrocarepharma.com
+To: complaints@aivoa-manufacturing.com
+Subject: Customer Complaint - Metformin Hydrochloride API - Batch MFH260712A
+
+Dear Quality Team,
+
+We are writing to formally log a complaint regarding a recent shipment of
+Metformin Hydrochloride API (IP/BP grade) received from your facility.
+
+Customer / Reporting Company: MetroCare Pharma Distributors
+Product Name: Metformin Hydrochloride API
+Product Strength/Grade: IP/BP
+Batch/Lot Number: MFH260712A
+Manufacturing Date: 2026-01-12
+Expiry Date: 2028-01-11
+Quantity Affected: 25 kg (1 HDPE drum)
+
+Complaint Details:
+Upon receipt and incoming QC testing, our lab observed off-white to
+slightly yellow discoloration in a portion of the API powder, along with a
+faint unusual odor not typically associated with this product. Visual
+inspection of the drum also noted the inner liner seal appeared
+compromised, raising concern about potential moisture ingress during
+transit or storage.
+
+This is classified internally as a Physical Defect / Discoloration
+complaint. We are placing the affected batch on hold pending your
+investigation and would appreciate a root cause analysis and CAPA at your
+earliest convenience.
+
+Regards,
+QA Department
+MetroCare Pharma Distributors
