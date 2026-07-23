@@ -63,9 +63,10 @@ def _run_agent_and_persist(db: Session, message: str, complaint_id: int | None, 
     db.commit()
 
     return schemas.ChatResponse(
-        assistant_message=result["assistant_message"],
-        complaint=schemas.ComplaintOut.model_validate(complaint),
-        tool_used=result["tool_used"],
+    assistant_message=result["assistant_message"],
+    complaint=schemas.ComplaintOut.model_validate(complaint),
+    tool_used=result["tool_used"],
+    execution_trace=result["execution_trace"],
     )
 
 

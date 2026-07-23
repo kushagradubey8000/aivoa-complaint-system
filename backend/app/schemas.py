@@ -1,5 +1,6 @@
 from typing import Optional, Any, Dict
 from pydantic import BaseModel
+from typing import Any
 
 
 class ComplaintFields(BaseModel):
@@ -36,3 +37,4 @@ class ChatResponse(BaseModel):
     assistant_message: str
     complaint: ComplaintOut
     tool_used: str
+    execution_trace: list[dict[str, Any]]

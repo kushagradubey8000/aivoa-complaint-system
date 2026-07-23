@@ -22,9 +22,26 @@ class AgentState(TypedDict, total=False):
     merged_fields: Dict[str, Any]
     risk_assessment: Dict[str, Any]
     assistant_message: str
+    execution_trace: list[dict]
+
+def add_execution_step(
+    state: AgentState,
+    node: str,
+    details: dict | None = None,
+):
+    if "execution_trace" not in state:
+        state["execution_trace"] = []
+
+    state["execution_trace"].append(
+        {
+            "node": node,
+            "details": details or {}
+        }
+    )
 
 
 def classify_intent(state: AgentState) -> AgentState:
+    
     """Decide which of the three mandatory tools this turn corresponds to."""
     if state.get("is_document"):
         state["tool_used"] = "document_extraction"
@@ -32,10 +49,20 @@ def classify_intent(state: AgentState) -> AgentState:
         state["tool_used"] = "edit_complaint"
     else:
         state["tool_used"] = "log_complaint"
+
+    add_execution_step(
+        state,
+        "classify_intent",
+        {
+            "tool": state["tool_used"]
+        }
+    )
+   
     return state
 
 
 def extract_fields(state: AgentState) -> AgentState:
+    
     tool = state["tool_used"]
     model = settings.groq_extraction_model
 
@@ -70,6 +97,15 @@ def extract_fields(state: AgentState) -> AgentState:
         )    
     # Drop null/empty values so we never overwrite existing data with nothing
     state["extracted_fields"] = {k: v for k, v in fields.items() if v not in (None, "", [])}
+    add_execution_step(
+        state,
+        "extract_fields",
+        {
+            "fields": list(state["extracted_fields"].keys()),
+            "count": len(state["extracted_fields"])
+        }
+    )
+
     return state
 
 
@@ -77,6 +113,13 @@ def merge_fields(state: AgentState) -> AgentState:
     base = dict(state.get("existing_complaint") or {})
     base.update(state["extracted_fields"])
     state["merged_fields"] = base
+    add_execution_step(
+        state,
+        "merge_fields",
+        {
+            "merged_count": len(base)
+        }
+    )
     return state
 
 
@@ -85,6 +128,15 @@ def run_risk_assessment(state: AgentState) -> AgentState:
     user_prompt = f"COMPLAINT RECORD:\n{json.dumps(state['merged_fields'], indent=2)}"
     risk = call_groq_json(RISK_ASSESSMENT_SYSTEM_PROMPT, user_prompt, model)
     state["risk_assessment"] = risk
+    add_execution_step(
+        state,
+        "assess_risk",
+        {
+            "severity": risk.get("severity"),
+            "priority": risk.get("priority"),
+            "classification": risk.get("risk_classification")
+        }
+   )
 
     # Mirror severity/priority into the top-level form fields too, matching the reference UI
     if risk.get("severity"):
@@ -95,6 +147,7 @@ def run_risk_assessment(state: AgentState) -> AgentState:
 
 
 def compose_reply(state: AgentState) -> AgentState:
+
     model = settings.groq_reasoning_model
     user_prompt = (
         f"TOOL USED: {state['tool_used']}\n"
@@ -102,4 +155,11 @@ def compose_reply(state: AgentState) -> AgentState:
         f"RISK ASSESSMENT: {json.dumps(state['risk_assessment'], indent=2)}"
     )
     state["assistant_message"] = call_groq_text(CHAT_REPLY_SYSTEM_PROMPT, user_prompt, model)
+    add_execution_step(
+        state,
+        "compose_reply",
+        {
+            "status": "Reply generated"
+        }
+    )
     return state

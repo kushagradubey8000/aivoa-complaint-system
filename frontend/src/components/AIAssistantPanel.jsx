@@ -4,8 +4,14 @@ import { setComplaint } from '../store/complaintSlice'
 import { addMessage, setProcessing, setExtractionProgress } from '../store/chatSlice'
 import { sendChatMessage, uploadDocument } from '../api/api'
 import ChatMessage from './ChatMessage'
+import LangGraphExecutionPanel from "./LangGraphExecutionPanel"
+
+
 
 export default function AIAssistantPanel() {
+  const [currentNode, setCurrentNode] = useState(null)
+  const [completedNodes, setCompletedNodes] = useState([])
+  const [executionTrace, setExecutionTrace] = useState([])
   const dispatch = useDispatch()
   const complaintId = useSelector((state) => state.complaint.id)
   const { messages, isProcessing, extractionProgress } = useSelector((state) => state.chat)
@@ -26,11 +32,25 @@ export default function AIAssistantPanel() {
     dispatch(addMessage({ role: 'user', content: text }))
     setInput('')
     dispatch(setProcessing(true))
+    setCompletedNodes([])
+    setCurrentNode("classify_intent")
+    
+
+// 👇 Existing API call
     try {
       // Tool routing happens server-side (LangGraph classify_intent node):
       // no existing complaintId -> Log Complaint tool
       // existing complaintId -> Edit Complaint tool
       const result = await sendChatMessage(text, complaintId)
+      
+      // Use the REAL LangGraph execution trace from the backend
+      setExecutionTrace(result.execution_trace || [])
+
+      setCompletedNodes(
+        (result.execution_trace || []).map(step => step.node)
+      )
+      setCurrentNode(null)
+
       applyResult(result)
     } catch (err) {
       dispatch(addMessage({ role: 'assistant', content: `Something went wrong: ${err.message}` }))
@@ -165,6 +185,12 @@ export default function AIAssistantPanel() {
         </button>
       </div>
       <div className="disclaimer">AI responses may contain errors. Please verify information.</div>
+      {/* NEW: LangGraph Execution */}
+      <LangGraphExecutionPanel
+        currentNode={currentNode}
+        completedNodes={completedNodes}
+        executionTrace={executionTrace}
+      />
     </div>
   )
 }
